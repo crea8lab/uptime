@@ -1,2 +1,5 @@
 config/config.js
 https/*
+
+# ignore locally written data
+.data/*
