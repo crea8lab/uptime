@@ -7,7 +7,7 @@
 
 // Dependencies
 const _data = require('../lib/data')
-const helpers = require('../lib/helpers')
+const { valildateFields } = require('../lib/helpers')
 
 // Define handlers
 const handlers = {
@@ -27,7 +27,34 @@ const handlers = {
 
   _users: {
     // Get request
-    get: (data, cb) => {},
+    /*
+    * @params: phone
+    * @Optional data: none
+    * @TODO only auth users can access their data.
+    */
+    get: ({ queryStringObject }, cb) => {
+      // Check that the phone number is valid
+      const { phone } = valildateFields(queryStringObject)
+
+      if (phone) {
+        // Look up the user
+        _data.read('users', phone, (err, data) => {
+          if (!err && data) {
+            // Remove the hashed password from the obj.
+            delete data.password
+            cb(200, data)
+          } else {
+            cb(404, {
+              'Error': `User with ${phone} not found in our DB`
+            })
+          }
+        })
+      } else {
+        cb(400, {
+          'Error': 'Missing required field'
+        })
+      }
+    },
 
     // Post request
     /*
@@ -36,11 +63,7 @@ const handlers = {
     */
     post: ({ payload }, cb) => {
       // Validate required params
-      const firstName = typeof(payload.firstName) === 'string' && payload.firstName.trim().length > 0 ? payload.firstName.trim() : false
-      const lastName = typeof(payload.lastName) === 'string' && payload.lastName.trim().length > 0 ? payload.lastName.trim() : false
-      const phone = typeof(payload.phone) === 'string' && payload.phone.trim().length === 11 ? payload.phone.trim() : false
-      const password = typeof(payload.password) === 'string' && payload.password.trim().length > 0 ? payload.password.trim() : false
-      const tosAgreement = typeof(payload.tosAgreement) === 'boolean' && payload.tosAgreement === true ? true : false
+      const { firstName, lastName, phone, password, tosAgreement} = valildateFields(payload)
 
       if (firstName && lastName && phone && password && tosAgreement) {
         // Check to see if user exists
