@@ -10,7 +10,8 @@ const handlers = require('../controller/controls')
 
 // Define a request router
 const router = {
-  'ping': handlers.ping
+  'ping': handlers.ping,
+  'users': handlers.users
 }
 
 module.exports = router
