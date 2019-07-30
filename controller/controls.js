@@ -38,7 +38,7 @@ const handlers = {
       // Validate required params
       const firstName = typeof(payload.firstName) === 'string' && payload.firstName.trim().length > 0 ? payload.firstName.trim() : false
       const lastName = typeof(payload.lastName) === 'string' && payload.lastName.trim().length > 0 ? payload.lastName.trim() : false
-      const phone = typeof(payload.phone) === 'string' && payload.phone.trim().length > 10 ? payload.phone.trim() : false
+      const phone = typeof(payload.phone) === 'string' && payload.phone.trim().length === 11 ? payload.phone.trim() : false
       const password = typeof(payload.password) === 'string' && payload.password.trim().length > 0 ? payload.password.trim() : false
       const tosAgreement = typeof(payload.tosAgreement) === 'boolean' && payload.tosAgreement === true ? true : false
 
