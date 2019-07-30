@@ -7,7 +7,7 @@
 
 // Dependencies
 const _data = require('../lib/data')
-const { valildateFields } = require('../lib/helpers')
+const { valildateFields, hashPassword } = require('../lib/helpers')
 
 // Define handlers
 const handlers = {
@@ -70,7 +70,7 @@ const handlers = {
         _data.read('users', phone, (err, data) => {
           if (err) {
             // Hash the password
-            const hashedPassword = helpers.hash(password)
+            const hashedPassword = hashPassword(password)
 
             if (hashedPassword) {
               // Create the user object
@@ -114,10 +114,88 @@ const handlers = {
     },
 
     // Put request
-    put: (data, cb) => {},
+    /*
+    * @params: phone
+    * @Optional data: firstName, lastName, password, tosAgreement
+    * @TODO only auth users can access their data.
+    */
+    put: ({ payload }, cb) => {
+      let { firstName, lastName, phone, password, tosAgreement} = valildateFields(payload)
+
+      // Cancel if no phone is provided
+      if (phone) {
+        // See if update fields exist
+        if (firstName || lastName || tosAgreement) {
+          // Look up the user
+          _data.read('users', phone, (err, userData) => {
+            if (!err && userData) {
+              password = hashPassword(password)
+              userData = {...userData, firstName, lastName, tosAgreement, password}
+
+              // Store the data
+              _data.update('users', phone, userData, (err) => {
+                if (!err) {
+                  cb(200)
+                } else {
+                  console.log(err);
+                  cb(500, {
+                    'Error': 'Could not update the user data'
+                  })
+                }
+              })
+            } else {
+              cb(404, {
+                'Error': 'The specified user does not exist'
+              })
+            }
+          })
+        } else {
+          cb(400, {
+            'Error': 'Missing fields to update'
+          })
+        }
+
+      } else {
+        cb(400, {
+          'Error': 'Missing required field'
+        })
+      }
+    },
 
     // Delete request
-    delete: (data, cb) => {},
+    /*
+    * @params: phone
+    * @Optional data: none
+    * @TODO only auth users can access their data.
+    * @TODO Delete other related files associated with this user.
+    */
+    delete: ({ queryStringObject }, cb) => {
+      // Check that the phone number is valid
+      const { phone } = valildateFields(queryStringObject)
+
+      if (phone) {
+        // Look up the user
+        _data.read('users', phone, (err, data) => {
+          if (!err && data) {
+            _data.delete('users', phone, err => {
+              if (!err) {
+                cb(200)
+              } else {
+                cb(500, {'Error': 'Could not delete the specified user'})
+              }
+            })
+          } else {
+            cb(404, {
+              'Error': `User with ${phone} not found in our DB`
+            })
+          }
+        })
+      } else {
+        cb(400, {
+          'Error': 'Missing required field'
+        })
+      }
+    },
   },
 
   // Not found handler
